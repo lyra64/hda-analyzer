@@ -31,11 +31,13 @@ Usage: hda_analyzer [[codec_proc] ...]
     Monitor mode: check for codec changes in realtime and dump diffs.
 """
 
+
+# I was really struggling with this, hopefully it works
 import os
 import sys
-import gobject
+from gi.repository import GObject
 import gtk
-import pango
+from gi.repository import Pango
 
 from hda_codec import HDACodec, HDA_card_list, HDA_Exporter_pyscript, \
                       EAPDBTL_BITS, PIN_WIDGET_CONTROL_BITS, \
@@ -46,8 +48,8 @@ from hda_guilib import *
 from hda_graph import create_graph
 
 def gethttpfile(url, size=1024*1024):
-  from urllib import splithost
-  from httplib import HTTP
+  from urllib.parse import splithost
+  from http.client import HTTP
   if not url.startswith('http:'):
     raise ValueError("URL %s" % url)
   host, selector = splithost(url[5:])
@@ -64,11 +66,11 @@ def read_nodes2(card, codec):
     c = HDACodec(card, codec)
   except OSError as msg:
     if msg[0] == 13:
-      print ("Codec %i/%i unavailable - permissions...") % (card, codec)
+      print(("Codec %i/%i unavailable - permissions...") % (card, codec))
     elif msg[0] == 16:
-      print ("Codec %i/%i is busy...") % (card, codec)
+      print(("Codec %i/%i is busy...")) % (card, codec)
     elif msg[0] != 2:
-      print ("Codec %i/%i access problem (%s)") % repr(msg)
+      print(("Codec %i/%i access problem (%s)")) % repr(msg)
     return
   c.analyze()
   if not card in CODEC_TREE:
@@ -100,10 +102,10 @@ def read_nodes(proc_files):
         proc_file = gethttpfile(a[0])
       elif len(a[0]) == 40 and not os.path.exists(a[0]):
         url = 'http://www.alsa-project.org/db/?f=' + a[0]
-        print('Downloading contents from %s') % url
+        print(('Downloading contents from %s') % url)
         proc_file = gethttpfile(url)
         if not proc_file:
-          print("HASH %s cannot be downloaded...") % a[0]
+          print(("HASH %s cannot be downloaded...") % a[0])
           continue
         else:
           print ('  Success')
@@ -133,7 +135,7 @@ def save_to_file(filename, txt, mode=None):
     if mode:
       os.chmod(filename, 0o755)
   except:
-    print ("Unable to save text to '%s'") % filename
+    print(("Unable to save text to '%s'") % filename)
 
 (
     TITLE_COLUMN,
@@ -141,7 +143,7 @@ def save_to_file(filename, txt, mode=None):
     CODEC_COLUMN,
     NODE_COLUMN,
     ITALIC_COLUMN
-) = range(5)
+) = list(range(5))
 
 class HDAAnalyzer(gtk.Window):
   info_buffer = None
@@ -486,7 +488,7 @@ mailing list, too.
 
 def monitor():
   from time import sleep
-  print ("Watching %s cards") % len(CODEC_TREE)
+  print(("Watching %s cards") % len(CODEC_TREE))
   dumps = {}
   while 1:
     ok = False
@@ -516,7 +518,7 @@ def monitor():
 def main(argv):
   cmd = None
   if len(argv) > 1 and argv[1] in ('-h', '-help', '--help'):
-    print (__doc__) % globals()
+    print((__doc__) % globals())
     return 0
   if len(argv) > 1 and argv[1] in ('-m', '-monitor', '--monitor'):
     cmd = 'monitor'
@@ -527,10 +529,10 @@ def main(argv):
   if read_nodes(sys.argv[1:]) == 0:
     print ("No HDA codecs were found or insufficient priviledges for ")
     print ("/dev/snd/controlC* and /dev/snd/hwdepC*D* device files.")
-    print
+    print()
     print ("You may also check, if you compiled HDA driver with HWDEP")
     print ("interface as well or close all application using HWDEP.")
-    print
+    print()
     print ("Try run this program as root user.")
     return 0
   else:
